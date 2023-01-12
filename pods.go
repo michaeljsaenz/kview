@@ -13,7 +13,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
 )
 
 // get pod names to populate initial list
@@ -26,28 +25,25 @@ func getPodData(c kubernetes.Clientset) (podData []string) {
 	for _, pod := range pods.Items {
 		podData = append(podData, pod.Name)
 	}
+
 	return podData
 }
 
-func getPodDetail(c kubernetes.Clientset, listItemID int, selectedPod string) (string, string, string, string, string, string, []string) {
-	pods, err := c.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{})
+//TODO: pull in namespace here
+func getPodDetail(c kubernetes.Clientset, selectedPod string) (string, string, string, string, string, string, []string) {
+	pod, err := c.CoreV1().Pods("kube-system").Get(context.TODO(), selectedPod, v1.GetOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
-	for _, pod := range pods.Items {
-		if pod.Name == selectedPod {
-			var containers []string
-			for _, container := range pod.Spec.Containers {
-				containers = append(containers, container.Name)
-			}
-			podCreationTime := pod.GetCreationTimestamp()
-			age := time.Since(podCreationTime.Time).Round(time.Second)
+	podCreationTime := pod.GetCreationTimestamp()
+	age := time.Since(podCreationTime.Time).Round(time.Second)
+	var containers []string
 
-			return string(pod.Status.Phase), age.String(), string(pod.Namespace), convertMapToString(pod.Labels), convertMapToString(pod.Annotations),
-				pod.Spec.NodeName, containers
-		}
+	for _, container := range pod.Spec.Containers {
+		containers = append(containers, container.Name)
 	}
-	return "", "", "", "", "", "", []string{}
+	return string(pod.Status.Phase), age.String(), string(pod.Namespace), convertMapToString(pod.Labels),
+		convertMapToString(pod.Annotations), pod.Spec.NodeName, containers
 }
 
 func getPodEvents(c kubernetes.Clientset, selectedPod string) (podEvents []string) {
@@ -85,24 +81,4 @@ func getPodTabData(widgetLabelName string) (widgetNameLabel *widget.Label, widge
 	widgetNameScroll = container.NewScroll(widgetName)
 	widgetNameScroll.SetMinSize(fyne.Size{Height: 100})
 	return widgetNameLabel, widgetName, widgetNameScroll
-}
-
-//TODO parse cluster context name to drop unnecessary text
-func getCurrentContext() string {
-	// get current context
-	clientConfig, _ := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
-		clientcmd.NewDefaultClientConfigLoadingRules(),
-		&clientcmd.ConfigOverrides{
-			CurrentContext: "",
-		}).RawConfig()
-	return clientConfig.CurrentContext
-}
-
-// used by labels, annotations, ...
-func convertMapToString(m map[string]string) string {
-	b := new(bytes.Buffer)
-	for key, value := range m {
-		fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
-	}
-	return b.String()
 }

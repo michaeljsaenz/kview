@@ -7,9 +7,18 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
-
-	_ "k8s.io/client-go/plugin/pkg/client/auth/oidc"
 )
+
+//TODO parse cluster context name to drop unnecessary text
+func getCurrentContext() string {
+	// get current context
+	clientConfig, _ := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
+		clientcmd.NewDefaultClientConfigLoadingRules(),
+		&clientcmd.ConfigOverrides{
+			CurrentContext: "",
+		}).RawConfig()
+	return clientConfig.CurrentContext
+}
 
 func getClientSet() *kubernetes.Clientset {
 	// https://github.com/kubernetes/client-go/blob/master/examples/out-of-cluster-client-configuration/main.go

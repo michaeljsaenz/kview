@@ -73,48 +73,44 @@ func main() {
 	})
 
 	list.OnSelected = func(id widget.ListItemID) {
-		for index := range podData {
-			if index == id {
-				selectedPod, err := data.GetValue(id)
-				if err != nil {
-					panic(err.Error())
-				}
-				title.Text = "Application (Pod): " + selectedPod
-				title.Refresh()
-
-				newPodStatus, newPodAge, newPodNamespace, newPodLabels, newPodAnnotations, newNodeName, newContainers := getPodDetail(*clientset, id, selectedPod)
-
-				podStatus.Text = "Status: " + newPodStatus + "\n" +
-					"Age: " + newPodAge + "\n" +
-					"Namespace: " + newPodNamespace + "\n" +
-					"Node: " + newNodeName
-				podStatus.Refresh()
-
-				podLabels.Text = newPodLabels
-				podLabels.Refresh()
-
-				podAnnotations.Text = newPodAnnotations
-				podAnnotations.Refresh()
-
-				// get pod events
-				newPodEvents := getPodEvents(*clientset, selectedPod)
-				strNewPodEvents := strings.Join(newPodEvents, "\n")
-				podEvents.Text = strNewPodEvents
-				podEvents.Refresh()
-
-				for _, tabContainerName := range newContainers {
-					podLogStream := getPodLogs(*clientset, newPodNamespace, selectedPod, tabContainerName)
-					podLog := widget.NewLabel(podLogStream)
-					podLog.TextStyle = fyne.TextStyle{Monospace: true}
-					podLog.Wrapping = fyne.TextWrapBreak
-					podLogScroll := container.NewScroll(podLog)
-					podLogScroll.SetMinSize(fyne.Size{Height: 200})
-					podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
-					podLog.Refresh()
-				}
-				podLogTabs.Refresh()
-			}
+		selectedPod, err := data.GetValue(id)
+		if err != nil {
+			panic(err.Error())
 		}
+		title.Text = "Application (Pod): " + selectedPod
+		title.Refresh()
+
+		newPodStatus, newPodAge, newPodNamespace, newPodLabels, newPodAnnotations, newNodeName, newContainers := getPodDetail(*clientset, selectedPod)
+
+		podStatus.Text = "Status: " + newPodStatus + "\n" +
+			"Age: " + newPodAge + "\n" +
+			"Namespace: " + newPodNamespace + "\n" +
+			"Node: " + newNodeName
+		podStatus.Refresh()
+
+		podLabels.Text = newPodLabels
+		podLabels.Refresh()
+
+		podAnnotations.Text = newPodAnnotations
+		podAnnotations.Refresh()
+
+		// get pod events
+		newPodEvents := getPodEvents(*clientset, selectedPod)
+		strNewPodEvents := strings.Join(newPodEvents, "\n")
+		podEvents.Text = strNewPodEvents
+		podEvents.Refresh()
+
+		for _, tabContainerName := range newContainers {
+			podLogStream := getPodLogs(*clientset, newPodNamespace, selectedPod, tabContainerName)
+			podLog := widget.NewLabel(podLogStream)
+			podLog.TextStyle = fyne.TextStyle{Monospace: true}
+			podLog.Wrapping = fyne.TextWrapBreak
+			podLogScroll := container.NewScroll(podLog)
+			podLogScroll.SetMinSize(fyne.Size{Height: 200})
+			podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
+			podLog.Refresh()
+		}
+		podLogTabs.Refresh()
 	}
 
 	list.OnUnselected = func(id widget.ListItemID) {
@@ -185,4 +181,5 @@ func main() {
 //TODO test if kubeConfig not accessible/ not set
 //TODO test if clusterContext not set / empty
 //TODO add copy capability
-//TODO: clear podTab data on refresh, similar to podLogTab data on refresh
+//TODO clear podTab data on refresh, similar to podLogTab data on refresh
+//TODO optimize the log tabs
