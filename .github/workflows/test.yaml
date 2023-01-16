@@ -10,6 +10,8 @@ jobs:
         with:
           fetch-depth: 2
       - name: Run Tests
+        env:
+          GO111MODULE: 'auto'
         run: |
           go test -race -coverprofile=coverage.txt -covermode=atomic
           curl -Os https://uploader.codecov.io/latest/linux/codecov
