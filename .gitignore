@@ -18,3 +18,4 @@
 *.key
 /istio*
 logs.txt
+coverage.txt
