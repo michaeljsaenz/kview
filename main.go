@@ -174,12 +174,3 @@ func main() {
 	win.SetContent(container.NewBorder(topContent, refresh, nil, nil, split))
 	win.ShowAndRun()
 }
-
-//TODO catch panic when cluster context not available:
-// panic: Get "https://1.2.3.4:443/api/v1/pods": dial tcp 1.2.3.4:443: i/o timeout
-
-//TODO test if kubeConfig not accessible/ not set
-//TODO test if clusterContext not set / empty
-//TODO add copy capability
-//TODO clear podTab data on refresh, similar to podLogTab data on refresh
-//TODO optimize the log tabs
