@@ -17,7 +17,7 @@ func main() {
 	// setup k8s clientset
 	clientset := getClientSet()
 
-	// get a list of all pods
+	// load initial pod list data (UI `list`)
 	podData := getPodData(*clientset)
 
 	// get current cluster context
@@ -30,7 +30,7 @@ func main() {
 	// resize fyne app window
 	win.Resize(fyne.NewSize(1200, 700)) // first width, then height
 
-	// list binding, bind pod list data(podData) to data
+	// list binding, bind pod list (podData) to data
 	data, list := getListData(&podData)
 
 	// top window label
@@ -68,49 +68,65 @@ func main() {
 	// update pod list data
 	refresh := widget.NewButton("Refresh", func() {
 		podData = getPodData(*clientset)
-		list.UnselectAll()
 		data.Reload()
+		list.UnselectAll()
 	})
 
-	list.OnSelected = func(id widget.ListItemID) {
-		selectedPod, err := data.GetValue(id)
-		if err != nil {
-			panic(err.Error())
-		}
-		title.Text = "Application (Pod): " + selectedPod
+	// check for error present in pod list data
+	stringErrorResponse, errorPresent := checkForError(podData)
+	if errorPresent {
+		title.Text = stringErrorResponse
+		title.Wrapping = fyne.TextWrapBreak
+		title.TextStyle = fyne.TextStyle{Italic: true, Bold: true}
 		title.Refresh()
+		list.Hide()
+		refresh = widget.NewButton("Refresh", func() {})
+		refresh.Refresh()
 
-		newPodStatus, newPodAge, newPodNamespace, newPodLabels, newPodAnnotations, newNodeName, newContainers := getPodDetail(*clientset, selectedPod)
+	} else {
 
-		podStatus.Text = "Status: " + newPodStatus + "\n" +
-			"Age: " + newPodAge + "\n" +
-			"Namespace: " + newPodNamespace + "\n" +
-			"Node: " + newNodeName
-		podStatus.Refresh()
+		list.OnSelected = func(id widget.ListItemID) {
+			selectedPod, err := data.GetValue(id)
+			if err != nil {
+				panic(err.Error())
+			}
+			title.Text = "Application (Pod): " + selectedPod
+			title.Refresh()
 
-		podLabels.Text = newPodLabels
-		podLabels.Refresh()
+			podNamespace := getPodNamespace(*clientset, selectedPod)
+			newPodStatus, newPodAge, newPodNamespace, newPodLabels, newPodAnnotations, newNodeName, newContainers := getPodDetail(*clientset, selectedPod, podNamespace)
 
-		podAnnotations.Text = newPodAnnotations
-		podAnnotations.Refresh()
+			podStatus.Text = "Status: " + newPodStatus + "\n" +
+				"Age: " + newPodAge + "\n" +
+				"Namespace: " + newPodNamespace + "\n" +
+				"Node: " + newNodeName
+			podStatus.Refresh()
 
-		// get pod events
-		newPodEvents := getPodEvents(*clientset, selectedPod)
-		strNewPodEvents := strings.Join(newPodEvents, "\n")
-		podEvents.Text = strNewPodEvents
-		podEvents.Refresh()
+			podLabels.Text = newPodLabels
+			podLabels.Refresh()
 
-		for _, tabContainerName := range newContainers {
-			podLogStream := getPodLogs(*clientset, newPodNamespace, selectedPod, tabContainerName)
-			podLog := widget.NewLabel(podLogStream)
-			podLog.TextStyle = fyne.TextStyle{Monospace: true}
-			podLog.Wrapping = fyne.TextWrapBreak
-			podLogScroll := container.NewScroll(podLog)
-			podLogScroll.SetMinSize(fyne.Size{Height: 200})
-			podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
-			podLog.Refresh()
+			podAnnotations.Text = newPodAnnotations
+			podAnnotations.Refresh()
+
+			// get pod events
+			newPodEvents := getPodEvents(*clientset, selectedPod)
+			strNewPodEvents := strings.Join(newPodEvents, "\n")
+			podEvents.Text = strNewPodEvents
+			podEvents.Refresh()
+
+			for _, tabContainerName := range newContainers {
+				podLogStream := getPodLogs(*clientset, newPodNamespace, selectedPod, tabContainerName)
+				podLog := widget.NewLabel(podLogStream)
+				podLog.TextStyle = fyne.TextStyle{Monospace: true}
+				podLog.Wrapping = fyne.TextWrapBreak
+				podLogScroll := container.NewScroll(podLog)
+				podLogScroll.SetMinSize(fyne.Size{Height: 200})
+				podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
+				podLog.Refresh()
+			}
+			podLogTabs.Refresh()
 		}
-		podLogTabs.Refresh()
+
 	}
 
 	list.OnUnselected = func(id widget.ListItemID) {

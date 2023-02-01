@@ -19,19 +19,17 @@ import (
 func getPodData(c kubernetes.Clientset) (podData []string) {
 	pods, err := c.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{})
 	if err != nil {
-		panic(err.Error())
+		podData = append(podData, fmt.Sprint(err))
+	} else {
+		for _, pod := range pods.Items {
+			podData = append(podData, pod.Name)
+		}
 	}
-
-	for _, pod := range pods.Items {
-		podData = append(podData, pod.Name)
-	}
-
 	return podData
 }
 
-//TODO: pull in namespace here
-func getPodDetail(c kubernetes.Clientset, selectedPod string) (string, string, string, string, string, string, []string) {
-	pod, err := c.CoreV1().Pods("kube-system").Get(context.TODO(), selectedPod, v1.GetOptions{})
+func getPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace string) (string, string, string, string, string, string, []string) {
+	pod, err := c.CoreV1().Pods(podNamespace).Get(context.TODO(), selectedPod, v1.GetOptions{})
 	if err != nil {
 		panic(err.Error())
 	}
@@ -81,4 +79,22 @@ func getPodTabData(widgetLabelName string) (widgetNameLabel *widget.Label, widge
 	widgetNameScroll = container.NewScroll(widgetName)
 	widgetNameScroll.SetMinSize(fyne.Size{Height: 100})
 	return widgetNameLabel, widgetName, widgetNameScroll
+}
+
+func getPodNamespace(c kubernetes.Clientset, podName string) (podNamespace string) {
+	podNameWithNamespace := make(map[string]string)
+	pods, err := c.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		panic(err.Error())
+	}
+	var podsItemsList []string
+	for _, pod := range pods.Items {
+		podsItemsList = append(podsItemsList, pod.Name, pod.Namespace)
+	}
+	for i := 0; i < len(podsItemsList); i += 2 {
+		podNameWithNamespace[podsItemsList[i]] = podsItemsList[i+1]
+	}
+	podNamespace = podNameWithNamespace[podName]
+
+	return podNamespace
 }
