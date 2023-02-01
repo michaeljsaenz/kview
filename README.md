@@ -7,11 +7,11 @@ GUI for kubectl
 
 ## TODO
 - [ ] add test coverage
-- [ ] catch panic when cluster context not available: `panic: Get "https://1.2.3.4:443/api/v1/pods": dial tcp 1.2.3.4:443: i/o timeout`
-- [ ] test for kubeConfig not accessible or set
-- [ ] test for clusterContext not set or empty
+- [ ] raise `getClientSet()` errors to UI
 - [ ] clear podTab data on refresh (similar to podLogTab data on refresh)
-- [ ] optimize the log tabs (load time)
+- [ ] `optimize` the log tabs (load time)
+- [ ] `optimize` large pod data (list data) load time
+- [ ] dynamic list load (pod list data) content when cluster context changes
 
 ## Features
 - [ ]  add copy capability to UI
