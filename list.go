@@ -22,3 +22,16 @@ func getListData(podData *[]string) (binding.ExternalStringList, *widget.List) {
 
 	return data, list
 }
+
+func setupErrorUI(stringErrorResponse string, list *widget.List) (*widget.Label, *widget.List, *widget.Button) {
+	title := widget.NewLabel("")
+	title.TextStyle = fyne.TextStyle{Monospace: true}
+	title.Text = stringErrorResponse
+	title.Wrapping = fyne.TextWrapBreak
+	title.TextStyle = fyne.TextStyle{Italic: true, Bold: true}
+	title.Refresh()
+	list.Hide()
+	refresh := widget.NewButton("Refresh", func() {})
+	refresh.Refresh()
+	return title, list, refresh
+}
