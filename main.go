@@ -75,16 +75,8 @@ func main() {
 	// check for error present in pod list data
 	stringErrorResponse, errorPresent := checkForError(podData)
 	if errorPresent {
-		title.Text = stringErrorResponse
-		title.Wrapping = fyne.TextWrapBreak
-		title.TextStyle = fyne.TextStyle{Italic: true, Bold: true}
-		title.Refresh()
-		list.Hide()
-		refresh = widget.NewButton("Refresh", func() {})
-		refresh.Refresh()
-
+		title, list, refresh = setupErrorUI(stringErrorResponse, list)
 	} else {
-
 		list.OnSelected = func(id widget.ListItemID) {
 			selectedPod, err := data.GetValue(id)
 			if err != nil {
@@ -109,7 +101,7 @@ func main() {
 			podAnnotations.Refresh()
 
 			// get pod events
-			newPodEvents := getPodEvents(*clientset, selectedPod)
+			newPodEvents := getPodEvents(*clientset, selectedPod, podNamespace)
 			strNewPodEvents := strings.Join(newPodEvents, "\n")
 			podEvents.Text = strNewPodEvents
 			podEvents.Refresh()

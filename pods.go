@@ -44,8 +44,8 @@ func getPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace strin
 		convertMapToString(pod.Annotations), pod.Spec.NodeName, containers
 }
 
-func getPodEvents(c kubernetes.Clientset, selectedPod string) (podEvents []string) {
-	events, _ := c.CoreV1().Events("").List(context.TODO(), v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s", selectedPod), TypeMeta: v1.TypeMeta{Kind: "Pod"}})
+func getPodEvents(c kubernetes.Clientset, selectedPod string, podNamespace string) (podEvents []string) {
+	events, _ := c.CoreV1().Events(podNamespace).List(context.TODO(), v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s", selectedPod), TypeMeta: v1.TypeMeta{Kind: "Pod"}})
 	for _, item := range events.Items {
 		podEvents = append(podEvents, "~> "+item.EventTime.Time.Format("2006-01-02 15:04:05")+", "+item.Message)
 	}
