@@ -15,15 +15,22 @@ func TestConvertMapToString(t *testing.T) {
 }
 
 func TestCheckForError(t *testing.T) {
-	testErrorSlice := []string{"i/o timeout", "context deadline exceeded", "connection refused"}
-	for _, error := range testErrorSlice {
+	testForErrorSlice := []string{"i/o timeout", "context deadline exceeded", "connection refused", "...no error found..."}
+	for _, error := range testForErrorSlice {
 		expectedTestValueString := "Error: " + error + " (validate cluster access and restart)"
-		expectedTestErrorExistsTrue := true
 		errorSlice := []string{error}
-		returnedValueString, returnedBool := checkForError(errorSlice)
-		if (expectedTestErrorExistsTrue != returnedBool) || (expectedTestValueString != returnedValueString) {
-			t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'", returnedValueString, returnedBool,
-				expectedTestValueString, expectedTestErrorExistsTrue)
+		if error == "...no error found..." {
+			returnedValueString, returnedBool := checkForError(errorSlice)
+			if (returnedBool != false) || (returnedValueString != "") {
+				t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'", returnedValueString, returnedBool,
+					expectedTestValueString, false)
+			}
+		} else {
+			returnedValueString, returnedBool := checkForError(errorSlice)
+			if (returnedBool != true) || (returnedValueString != expectedTestValueString) {
+				t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'", returnedValueString, returnedBool,
+					expectedTestValueString, true)
+			}
 		}
 	}
 }
