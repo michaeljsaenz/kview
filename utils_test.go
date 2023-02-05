@@ -22,14 +22,14 @@ func TestCheckForError(t *testing.T) {
 		if error == "...no error found..." {
 			returnedValueString, returnedBool := checkForError(errorSlice)
 			if (returnedBool != false) || (returnedValueString != "") {
-				t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'", returnedValueString, returnedBool,
-					expectedTestValueString, false)
+				t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'",
+					returnedValueString, returnedBool, expectedTestValueString, false)
 			}
 		} else {
 			returnedValueString, returnedBool := checkForError(errorSlice)
 			if (returnedBool != true) || (returnedValueString != expectedTestValueString) {
-				t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'", returnedValueString, returnedBool,
-					expectedTestValueString, true)
+				t.Errorf("Did not get expected result. Got '%s' and '%v', wanted '%s' and '%v'",
+					returnedValueString, returnedBool, expectedTestValueString, true)
 			}
 		}
 	}
