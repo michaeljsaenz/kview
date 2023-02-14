@@ -15,7 +15,7 @@ func TestConvertMapToString(t *testing.T) {
 }
 
 func TestCheckForError(t *testing.T) {
-	testForErrorSlice := []string{"i/o timeout", "context deadline exceeded", "connection refused", "...no error found..."}
+	testForErrorSlice := []string{"i/o timeout", "context deadline exceeded", "connection refused", "...no error found...", "Bad Request"}
 	for _, error := range testForErrorSlice {
 		expectedTestValueString := "Error: " + error + " (validate cluster access and restart)"
 		errorSlice := []string{error}

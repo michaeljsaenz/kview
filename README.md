@@ -7,14 +7,13 @@ GUI for kubectl
 
 ## TODO
 - [ ] add test coverage
-- [ ] raise `getClientSet()` errors to UI
-- [ ] clear podTab data on refresh (similar to podLogTab data on refresh)
-- [ ] `optimize` the log tabs (load time)
-- [ ] `optimize` large pod data (list data) load time
-- [ ] dynamic list load (pod list data) content when cluster context changes
+- [ ] refactor `main.go`
+
 
 ## Features
 - [ ]  add copy capability to UI
+- [ ]  add progress bar while logs load
+- [ ] dynamic list load (pod list data) content when cluster context changes
 
 ## Release
 1.0.0 (TBD)
