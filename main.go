@@ -34,7 +34,8 @@ func main() {
 	data, list := getListData(&podData)
 
 	// top window label
-	topLabel := canvas.NewText(("Cluster Context: " + currentContext), color.NRGBA{R: 57, G: 112, B: 228, A: 255})
+	topLabel := canvas.NewText(("Cluster Context: " + currentContext),
+		color.NRGBA{R: 57, G: 112, B: 228, A: 255})
 	topLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	topContent := container.New(layout.NewCenterLayout(), topLabel)
 
@@ -51,28 +52,26 @@ func main() {
 	podLabelsLabel, podLabels, podLabelsScroll := getPodTabData("Labels")
 	podAnnotationsLabel, podAnnotations, podAnnotationsScroll := getPodTabData("Annotations")
 	podEventsLabel, podEvents, podEventsScroll := getPodTabData("Events")
+	podLogsLabel, podLog, podLogsScroll := getPodTabData("")
 
-	// setup pod tabs
+	// setup tabs
 	podTabs := container.NewAppTabs(
 		container.NewTabItem(podLabelsLabel.Text, podLabelsScroll),
 		container.NewTabItem(podAnnotationsLabel.Text, podAnnotationsScroll),
 		container.NewTabItem(podEventsLabel.Text, podEventsScroll),
 	)
-
-	// setup pod log tabs
-	podLogsLabel := widget.NewLabel("")
-	podLogsLabel.TextStyle = fyne.TextStyle{Monospace: true}
-	defaultTabItem := container.NewTabItem("Logs", podLogsLabel)
-	podLogTabs := container.NewAppTabs(defaultTabItem)
+	podLogTabs := container.NewAppTabs(
+		container.NewTabItem(podLogsLabel.Text, podLogsScroll),
+	)
 
 	// update pod list data
 	refresh := widget.NewButton("Refresh", func() {
 		podData = getPodData(*clientset)
-		data.Reload()
 		list.UnselectAll()
+		data.Reload()
 	})
 
-	// check for error present in pod list data
+	// check for error from initial pod list data
 	stringErrorResponse, errorPresent := checkForError(podData)
 	if errorPresent {
 		title, list, refresh = setupErrorUI(stringErrorResponse, list)
@@ -106,25 +105,22 @@ func main() {
 			podEvents.Text = strNewPodEvents
 			podEvents.Refresh()
 
+			// remove container log tabs before loading current selection
+			podTabItems := len(podLogTabs.Items)
+			for podTabItems > 0 {
+				for _, item := range podLogTabs.Items {
+					podLogTabs.Remove(item)
+				}
+				podTabItems = len(podLogTabs.Items)
+			}
+
 			for _, tabContainerName := range newContainers {
 				podLogStream := getPodLogs(*clientset, newPodNamespace, selectedPod, tabContainerName)
-				podLog := widget.NewLabel(podLogStream)
-				podLog.TextStyle = fyne.TextStyle{Monospace: true}
-				podLog.Wrapping = fyne.TextWrapBreak
+				podLog = widget.NewLabel(podLogStream)
 				podLogScroll := container.NewScroll(podLog)
 				podLogScroll.SetMinSize(fyne.Size{Height: 200})
 				podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
-				podLog.Refresh()
-			}
-			podLogTabs.Refresh()
-		}
-
-	}
-
-	list.OnUnselected = func(id widget.ListItemID) {
-		for _, tabItem := range podLogTabs.Items {
-			if tabItem != defaultTabItem {
-				podLogTabs.Remove(tabItem)
+				podLogTabs.Refresh()
 			}
 		}
 	}

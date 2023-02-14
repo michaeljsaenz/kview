@@ -53,7 +53,7 @@ func getPodEvents(c kubernetes.Clientset, selectedPod string, podNamespace strin
 }
 
 func getPodLogs(c kubernetes.Clientset, podNamespace string, selectedPod string, containerName string) (podLog string) {
-	podLogReq := c.CoreV1().Pods(podNamespace).GetLogs(selectedPod, &corev1.PodLogOptions{Container: containerName})
+	podLogReq := c.CoreV1().Pods(podNamespace).GetLogs(selectedPod, &corev1.PodLogOptions{Container: containerName, SinceSeconds: createInt64(1800)})
 	podStream, err := podLogReq.Stream(context.TODO())
 	if err != nil {
 		return fmt.Sprintf("error opening pod log stream, %v", err)
@@ -75,7 +75,6 @@ func getPodTabData(widgetLabelName string) (widgetNameLabel *widget.Label, widge
 	widgetNameLabel.TextStyle = fyne.TextStyle{Monospace: true}
 	widgetName = widget.NewLabel("")
 	widgetName.TextStyle = fyne.TextStyle{Monospace: true}
-	widgetName.Wrapping = fyne.TextWrapBreak
 	widgetNameScroll = container.NewScroll(widgetName)
 	widgetNameScroll.SetMinSize(fyne.Size{Height: 100})
 	return widgetNameLabel, widgetName, widgetNameScroll

@@ -18,11 +18,16 @@ func convertMapToString(m map[string]string) string {
 // check for string(error) in slice
 func checkForError(slice []string) (string, bool) {
 	checkValue := slice[0]
-	listOfErrors := []string{"i/o timeout", "context deadline exceeded", "connection refused"}
+	listOfErrors := []string{"i/o timeout", "context deadline exceeded", "connection refused", "Bad Request"}
 	for _, error := range listOfErrors {
 		if strings.Contains(checkValue, error) {
 			return "Error: " + checkValue + " (validate cluster access and restart)", true
 		}
 	}
 	return "", false
+}
+
+// return pointer to int64
+func createInt64(num int64) *int64 {
+	return &num
 }
