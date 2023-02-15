@@ -26,7 +26,7 @@ func main() {
 	// create a new app
 	app := app.New()
 	// create a new window with app title
-	win := app.NewWindow("KUI")
+	win := app.NewWindow("KView")
 	// resize fyne app window
 	win.Resize(fyne.NewSize(1200, 700)) // first width, then height
 
