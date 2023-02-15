@@ -6,7 +6,7 @@ UI for kubectl
 
 
 ## TODO
-- [ ] add test coverage
+- [ ] +test coverage
 - [ ] refactor `main.go`
 
 
