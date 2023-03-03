@@ -5,4 +5,4 @@ Website = "https://kview.app"
   Name = "KView"
   ID = "app.kview"
   Version = "0.0.1"
-  Build = 2
+  Build = 3
