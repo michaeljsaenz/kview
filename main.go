@@ -52,7 +52,7 @@ func main() {
 	podLabelsLabel, podLabels, podLabelsScroll := getPodTabData("Labels")
 	podAnnotationsLabel, podAnnotations, podAnnotationsScroll := getPodTabData("Annotations")
 	podEventsLabel, podEvents, podEventsScroll := getPodTabData("Events")
-	podLogsLabel, podLog, podLogsScroll := getPodTabData("")
+	podLogsLabel, podLog, podLogScroll := getPodTabData("")
 
 	// setup tabs
 	podTabs := container.NewAppTabs(
@@ -61,7 +61,7 @@ func main() {
 		container.NewTabItem(podEventsLabel.Text, podEventsScroll),
 	)
 	podLogTabs := container.NewAppTabs(
-		container.NewTabItem(podLogsLabel.Text, podLogsScroll),
+		container.NewTabItem(podLogsLabel.Text, podLogScroll),
 	)
 
 	// update pod list data
@@ -117,7 +117,7 @@ func main() {
 			for _, tabContainerName := range newContainers {
 				podLogStream := getPodLogs(*clientset, newPodNamespace, selectedPod, tabContainerName)
 				podLog = widget.NewLabel(podLogStream)
-				podLogScroll := container.NewScroll(podLog)
+				podLogScroll = container.NewScroll(podLog)
 				podLogScroll.SetMinSize(fyne.Size{Height: 200})
 				podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
 				podLogTabs.Refresh()

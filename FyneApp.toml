@@ -1,0 +1,8 @@
+Website = "https://kview.app"
+
+[Details]
+  Icon = "icon.png"
+  Name = "KView"
+  ID = "app.kview"
+  Version = "0.0.1"
+  Build = 2
