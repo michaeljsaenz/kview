@@ -53,7 +53,8 @@ func getPodEvents(c kubernetes.Clientset, selectedPod string, podNamespace strin
 }
 
 func getPodLogs(c kubernetes.Clientset, podNamespace string, selectedPod string, containerName string) (podLog string) {
-	podLogReq := c.CoreV1().Pods(podNamespace).GetLogs(selectedPod, &corev1.PodLogOptions{Container: containerName, SinceSeconds: createInt64(1800)})
+	podLogReq := c.CoreV1().Pods(podNamespace).GetLogs(selectedPod, &corev1.PodLogOptions{Container: containerName,
+		SinceSeconds: createInt64(1800)}) //, LimitBytes: createInt64(1000)}) //TODO maybe grab less logs for display while usign refresh to pull new logs
 	podStream, err := podLogReq.Stream(context.TODO())
 	if err != nil {
 		return fmt.Sprintf("error opening pod log stream, %v", err)
