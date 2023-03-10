@@ -20,3 +20,5 @@
 logs.txt
 coverage.txt
 .DS_Store
+*.drawio
+KView.app/*
