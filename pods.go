@@ -5,6 +5,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"strconv"
+	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -34,13 +36,24 @@ func getPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace strin
 		panic(err.Error())
 	}
 	podCreationTime := pod.GetCreationTimestamp()
-	age := time.Since(podCreationTime.Time).Round(time.Second)
+	age := time.Since(podCreationTime.Time).Round(time.Second).String()
+	ageHours := time.Since(podCreationTime.Time).Round(time.Hour).String()
+	ageHoursSlice := strings.Split(ageHours, "h")
+	ageHoursInt, err := strconv.Atoi(ageHoursSlice[0])
+	if err != nil {
+		panic(err.Error())
+	}
+	if ageHoursInt > 23 {
+		ageInt := ageHoursInt / 24
+		age = strconv.Itoa(ageInt) + "d"
+	}
+
 	var containers []string
 
 	for _, container := range pod.Spec.Containers {
 		containers = append(containers, container.Name)
 	}
-	return string(pod.Status.Phase), age.String(), string(pod.Namespace), convertMapToString(pod.Labels),
+	return string(pod.Status.Phase), age, string(pod.Namespace), convertMapToString(pod.Labels),
 		convertMapToString(pod.Annotations), pod.Spec.NodeName, containers
 }
 
