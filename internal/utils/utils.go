@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"bytes"
@@ -7,7 +7,7 @@ import (
 )
 
 // used by labels, annotations, ...
-func convertMapToString(m map[string]string) string {
+func ConvertMapToString(m map[string]string) string {
 	b := new(bytes.Buffer)
 	for key, value := range m {
 		fmt.Fprintf(b, "%s=\"%s\"\n", key, value)
@@ -16,7 +16,7 @@ func convertMapToString(m map[string]string) string {
 }
 
 // check for string(error) in slice
-func checkForError(slice []string) (string, bool) {
+func CheckForError(slice []string) (string, bool) {
 	checkValue := slice[0]
 	listOfErrors := []string{"i/o timeout", "context deadline exceeded", "connection refused", "Bad Request"}
 	for _, error := range listOfErrors {
@@ -28,6 +28,6 @@ func checkForError(slice []string) (string, bool) {
 }
 
 // return pointer to int64
-func createInt64(num int64) *int64 {
+func CreateInt64(num int64) *int64 {
 	return &num
 }

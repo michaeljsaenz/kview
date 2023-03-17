@@ -1,4 +1,4 @@
-package main
+package k8s
 
 import (
 	"testing"
@@ -13,7 +13,7 @@ func TestGetCurrentContext(t *testing.T) {
 			CurrentContext: "",
 		}).RawConfig()
 	expectedCurrentContext := testClientConfig.CurrentContext
-	currentContext := getCurrentContext()
+	currentContext := GetCurrentContext()
 
 	if expectedCurrentContext != currentContext {
 		t.Errorf("Did not get expected result. Got '%s', wanted '%s'", currentContext, expectedCurrentContext)
