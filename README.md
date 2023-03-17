@@ -29,6 +29,7 @@
 - [ ]  add progress bar during log loading
 - [ ]  refresh/update pod list data when cluster context changes
 - [ ]  add [CompletionEntry](https://github.com/fyne-io/fyne-x#completionentry) to search input
+- [ ]  add `tested with` k8s versions
 
 ## Release <a href="https://img.shields.io/github/v/release/michaeljsaenz/kview?include_prereleases" title="Latest Release" rel="nofollow"><img src="https://img.shields.io/github/v/release/michaeljsaenz/kview?include_prereleases" alt="Latest Release"></a>
 
