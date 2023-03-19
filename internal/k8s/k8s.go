@@ -85,9 +85,8 @@ func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace strin
 	podCreationTime := pod.GetCreationTimestamp()
 	age := time.Since(podCreationTime.Time).Round(time.Second).String()
 	ageHours := time.Since(podCreationTime.Time).Round(time.Hour).String()
-
 	var ageHoursSlice []string
-	if !strings.Contains(ageHours, "0s") {
+	if !strings.HasPrefix(ageHours, "0s") {
 		ageHoursSlice = strings.Split(ageHours, "h")
 		ageHoursInt, err := strconv.Atoi(ageHoursSlice[0])
 		if err != nil {
