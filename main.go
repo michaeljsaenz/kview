@@ -7,6 +7,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/michaeljsaenz/kview/internal/k8s"
 	"github.com/michaeljsaenz/kview/internal/ui"
@@ -26,6 +28,9 @@ func main() {
 	// create a new app, window title and size
 	app := app.New()
 	win := app.NewWindow("KView")
+	// icon, _ := fyne.LoadResourceFromPath("internal/assets/icon/icon.png")
+	// win.SetIcon(icon)
+	win.SetMaster()
 	win.Resize(fyne.NewSize(1200, 700))
 
 	// list binding, bind pod list (podData) to data
@@ -43,7 +48,7 @@ func main() {
 		podEventsLabel, podEventsScroll, podLogsLabel, podLogScroll)
 
 	// update pod list data
-	refresh := widget.NewButton("Refresh", func() {
+	refresh := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {
 		podData = ui.RefreshButton(input, *clientset)
 		data.Reload()
 		list.UnselectAll()
@@ -62,12 +67,21 @@ func main() {
 			list.UnselectAll()
 		}
 	}
+	describeButton := widget.NewButtonWithIcon("Container Detail", theme.ZoomInIcon(), func() {
+	})
+	describeButton.Hide()
+
+	yamlButton := widget.NewButtonWithIcon("YAML", theme.ZoomInIcon(), func() {
+	})
+	yamlButton.Hide()
+
+	grid := container.New(layout.NewGridLayout(1), describeButton, yamlButton)
 
 	ui.ListOnSelected(list, data, *clientset, rightWindowTitle, podStatus, podLabels,
-		podAnnotations, podEvents, podLog, podLogTabs, podLogScroll)
+		podAnnotations, podEvents, podLog, podLogTabs, podLogScroll, app, describeButton, yamlButton)
 
 	rightContainer := container.NewBorder(
-		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs),
+		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs, grid),
 		nil, nil, nil, rightWindow)
 
 	listContainer := container.NewBorder(container.NewVBox(listTitle, input),

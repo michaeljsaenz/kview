@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/michaeljsaenz/kview/internal/k8s"
 	"k8s.io/client-go/kubernetes"
@@ -39,14 +40,16 @@ func SetupErrorUI(stringErrorResponse string, list *widget.List) (*widget.Label,
 	title.TextStyle = fyne.TextStyle{Italic: true, Bold: true}
 	title.Refresh()
 	list.Hide()
-	refresh := widget.NewButton("Refresh", func() {})
+	refresh := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {})
 	refresh.Refresh()
 	return title, list, refresh
 }
 
 func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientset kubernetes.Clientset, title, podStatus,
-	podLabels, podAnnotations, podEvents, podLog *widget.Label, podLogTabs *container.AppTabs, podLogScroll *container.Scroll) {
+	podLabels, podAnnotations, podEvents, podLog *widget.Label, podLogTabs *container.AppTabs, podLogScroll *container.Scroll,
+	app fyne.App, db *widget.Button, yb *widget.Button) {
 	list.OnSelected = func(id widget.ListItemID) {
+
 		selectedPod, err := data.GetValue(id)
 		if err != nil {
 			panic(err.Error())
@@ -89,9 +92,56 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			podLog = widget.NewLabel(podLogStream)
 			podLogScroll = container.NewScroll(podLog)
 			podLogScroll.SetMinSize(fyne.Size{Height: 200})
-			podLogTabs.Append(container.NewTabItem(tabContainerName, podLogScroll))
+			podLogTabs.Append(container.NewTabItemWithIcon(tabContainerName, theme.DocumentIcon(), podLogScroll))
 			podLogTabs.Refresh()
 		}
+		yb.Show()
+		db.Show()
+
+		db.OnTapped = func() {
+			// call describe and display in new window
+			win := app.NewWindow("Application (Pod): " + selectedPod)
+			var containerDetail []string
+			for _, containerName := range newContainers {
+				containerDetail = k8s.GetPodDescribe(clientset, newPodNamespace, selectedPod, containerName)
+			}
+			containerDetails := strings.Join(containerDetail, "\n")
+			containerDetailsScroll := container.NewScroll(widget.NewLabel(containerDetails))
+			//win.SetContent(containerDetailsScroll)
+
+			bottomBox := container.NewVBox(
+				widget.NewButtonWithIcon("Copy Container Detail", theme.ContentCopyIcon(), func() {
+					win.Clipboard().SetContent(containerDetails)
+				}),
+			)
+			content := container.NewBorder(nil, bottomBox, nil, nil, containerDetailsScroll)
+
+			win.SetContent(content)
+			win.Resize(fyne.NewSize(1200, 700))
+			win.Show()
+		}
+
+		yb.OnTapped = func() {
+			// export yaml and display in new window
+			win := app.NewWindow("Application (Pod): " + selectedPod)
+			podYaml, err := k8s.GetPodYaml(clientset, newPodNamespace, selectedPod)
+			if err != nil {
+				panic(err.Error())
+			}
+			podYamlScroll := container.NewScroll(widget.NewLabel(podYaml))
+
+			bottomBox := container.NewVBox(
+				widget.NewButtonWithIcon("Copy YAML", theme.ContentCopyIcon(), func() {
+					win.Clipboard().SetContent(podYaml)
+				}),
+			)
+			content := container.NewBorder(nil, bottomBox, nil, nil, podYamlScroll)
+
+			win.SetContent(content)
+			win.Resize(fyne.NewSize(1200, 700))
+			win.Show()
+		}
+
 	}
 }
 
