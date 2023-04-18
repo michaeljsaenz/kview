@@ -14,11 +14,11 @@
   - KView source code is available to everyone under the [MIT license](./LICENSE).
 
 ## Features
-- [x]  View pod logs, annotations, labels, current status, events, cluster context
-- [x]  Search/filter application(pod) list
-- [x]  On-demand refresh
-- [x]  Copy application(pod) YAML, container details  
-
+- **Filter and Search:**  Filter by application(pod)
+- **On-demand Refresh:** Refresh application(pod) list on-demand
+- **Status Information:** View application(pod) status, annotations, labels, including events and current cluster-context
+- **Export YAML:**  View/Copy application(pod) YAML and/or container details
+- **Logs:** View container logs
 
 ## Screenshots
 
