@@ -14,22 +14,23 @@
   - KView source code is available to everyone under the [MIT license](./LICENSE).
 
 ## Features
-- [x]  view pod logs, annotations, labels, status, events, cluster context
-- [x]  search application(pod) list
-- [x]  on-demand refresh
+- [x]  View pod logs, annotations, labels, current status, events, cluster context
+- [x]  Search/filter application(pod) list
+- [x]  On-demand refresh
+- [x]  Copy application(pod) YAML, container details  
 
 
 ## Screenshots
 
 
 ## TODO
-- [ ]  add copy capability to UI
-- [ ]  add `describe` button or similar to pull add'l details
-- [ ]  add `yaml` button, to export via `yaml`
+- [ ]  add copy capability to UI (tab data, container logs)
+- [ ]  check pulling pod logs via timestamp vs. pod logs via bytes
 - [ ]  add progress bar during log loading
 - [ ]  refresh/update pod list data when cluster context changes
 - [ ]  add [CompletionEntry](https://github.com/fyne-io/fyne-x#completionentry) to search input
 - [ ]  add `tested with` k8s versions
+- [ ]  add Volumes `tab` (next to events)
 
 ## Release <a href="https://img.shields.io/github/v/release/michaeljsaenz/kview?include_prereleases" title="Latest Release" rel="nofollow"><img src="https://img.shields.io/github/v/release/michaeljsaenz/kview?include_prereleases" alt="Latest Release"></a>
 
