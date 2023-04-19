@@ -32,6 +32,7 @@ func main() {
 	// win.SetIcon(icon)
 	win.SetMaster()
 	win.Resize(fyne.NewSize(1200, 700))
+	win.CenterOnScreen()
 
 	// list binding, bind pod list (podData) to data
 	data, list := ui.GetListData(&podData)
