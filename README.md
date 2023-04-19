@@ -21,7 +21,7 @@
 - **Logs:** View container logs
 
 ## Screenshots
-
+![Screenshot](screenshot.png)
 
 ## TODO
 - [ ]  add copy capability to UI (tab data, container logs)
