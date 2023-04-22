@@ -10,7 +10,6 @@
 - Written :100: percent in [Go](https://go.dev/)
 - Built for macOS:apple:
 - Contributions welcome:exclamation:
-  - KView source code is available to everyone under the [MIT license](./LICENSE).
 
 ## Features
 - **Filter and Search:**  Filter by application(pod)
