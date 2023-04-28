@@ -47,7 +47,7 @@ func SetupErrorUI(stringErrorResponse string, list *widget.List) (*widget.Label,
 
 func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientset kubernetes.Clientset, title, podStatus,
 	podLabels, podAnnotations, podEvents, podLog *widget.Label, podLogTabs *container.AppTabs, podLogScroll *container.Scroll,
-	app fyne.App, db *widget.Button, yb *widget.Button) {
+	app fyne.App, yb *widget.Button) {
 	list.OnSelected = func(id widget.ListItemID) {
 
 		selectedPod, err := data.GetValue(id)
@@ -96,30 +96,6 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			podLogTabs.Refresh()
 		}
 		yb.Show()
-		db.Show()
-
-		db.OnTapped = func() {
-			// call describe and display in new window
-			win := app.NewWindow("Application (Pod): " + selectedPod)
-			var containerDetail []string
-			for _, containerName := range newContainers {
-				containerDetail = k8s.GetPodDescribe(clientset, newPodNamespace, selectedPod, containerName)
-			}
-			containerDetails := strings.Join(containerDetail, "\n")
-			containerDetailsScroll := container.NewScroll(widget.NewLabel(containerDetails))
-			//win.SetContent(containerDetailsScroll)
-
-			bottomBox := container.NewVBox(
-				widget.NewButtonWithIcon("Copy Container Detail", theme.ContentCopyIcon(), func() {
-					win.Clipboard().SetContent(containerDetails)
-				}),
-			)
-			content := container.NewBorder(nil, bottomBox, nil, nil, containerDetailsScroll)
-
-			win.SetContent(content)
-			win.Resize(fyne.NewSize(1200, 700))
-			win.Show()
-		}
 
 		yb.OnTapped = func() {
 			// export yaml and display in new window
