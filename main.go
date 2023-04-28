@@ -68,18 +68,15 @@ func main() {
 			list.UnselectAll()
 		}
 	}
-	describeButton := widget.NewButtonWithIcon("Container Detail", theme.ZoomInIcon(), func() {
-	})
-	describeButton.Hide()
 
-	yamlButton := widget.NewButtonWithIcon("YAML", theme.ZoomInIcon(), func() {
+	yamlButton := widget.NewButtonWithIcon("Application (Pod) YAML", theme.ZoomInIcon(), func() {
 	})
 	yamlButton.Hide()
 
-	grid := container.New(layout.NewGridLayout(1), describeButton, yamlButton)
+	grid := container.New(layout.NewGridLayout(1), yamlButton)
 
 	ui.ListOnSelected(list, data, *clientset, rightWindowTitle, podStatus, podLabels,
-		podAnnotations, podEvents, podLog, podLogTabs, podLogScroll, app, describeButton, yamlButton)
+		podAnnotations, podEvents, podLog, podLogTabs, podLogScroll, app, yamlButton)
 
 	rightContainer := container.NewBorder(
 		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs, grid),
