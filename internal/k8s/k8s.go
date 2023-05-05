@@ -26,7 +26,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-//TODO parse cluster context name to drop unnecessary text
+// TODO parse cluster context name to drop unnecessary text
 func GetCurrentContext() string {
 	// get current context
 	clientConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(
@@ -68,9 +68,9 @@ func GetClientSet() *kubernetes.Clientset {
 
 }
 
-// get pod names to populate initial list
-func GetPodData(c kubernetes.Clientset) (podData []string) {
-	pods, err := c.CoreV1().Pods("").List(context.TODO(), v1.ListOptions{})
+// get pod names with provided namespace
+func GetPodDataWithNamespace(c kubernetes.Clientset, namespace string) (podData []string) {
+	pods, err := c.CoreV1().Pods(namespace).List(context.TODO(), v1.ListOptions{})
 	if err != nil {
 		podData = append(podData, fmt.Sprint(err))
 	} else {
@@ -79,6 +79,23 @@ func GetPodData(c kubernetes.Clientset) (podData []string) {
 		}
 	}
 	return podData
+
+}
+
+// get namespaces
+func GetNamespaces(c kubernetes.Clientset) (namespaceList []string) {
+	// retrieve the list of namespaces
+	namespaces, err := c.CoreV1().Namespaces().List(context.TODO(), v1.ListOptions{})
+	if err != nil {
+		fmt.Printf("failed to get namespaces: %v", err)
+		namespaceList = append(namespaceList, fmt.Sprint(err))
+	} else {
+		for _, namespace := range namespaces.Items {
+			namespaceList = append(namespaceList, namespace.Name)
+		}
+	}
+	return namespaceList
+
 }
 
 func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace string) (string, string, string, string, string, string, []string) {
@@ -106,7 +123,7 @@ func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace strin
 func GetPodEvents(c kubernetes.Clientset, selectedPod string, podNamespace string) (podEvents []string) {
 	events, _ := c.CoreV1().Events(podNamespace).List(context.TODO(), v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s", selectedPod), TypeMeta: v1.TypeMeta{Kind: "Pod"}})
 	for _, item := range events.Items {
-		podEvents = append(podEvents, "~> "+item.EventTime.Time.Format("2006-01-02 15:04:05")+", "+item.Message)
+		podEvents = append(podEvents, "~> "+item.FirstTimestamp.String()+" "+item.Message)
 	}
 	return podEvents
 }

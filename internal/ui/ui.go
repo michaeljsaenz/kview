@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image/color"
 	"strings"
 
@@ -102,7 +103,7 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			win := app.NewWindow("Application (Pod): " + selectedPod)
 			podYaml, err := k8s.GetPodYaml(clientset, newPodNamespace, selectedPod)
 			if err != nil {
-				panic(err.Error())
+				fmt.Printf("error with pod yaml: %v", err)
 			}
 			podYamlScroll := container.NewScroll(widget.NewLabel(podYaml))
 
@@ -121,20 +122,23 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 	}
 }
 
-func InputOnSubmitted(input *widget.Entry, clientset kubernetes.Clientset) []string {
+func InputOnSubmitted(input *widget.Entry, clientset kubernetes.Clientset, namespaceListDropdown *widget.Select) []string {
 	// submit to func input string (pod name), return new pod list
 	inputText := input.Text
-	var inputTextList []string
-	podData := k8s.GetPodData(clientset)
+	var inputTextList, podData []string
 	if inputText == "" {
 		return podData
-	} else {
+	}
+	if namespaceListDropdown.Selected != "" {
+		podData = k8s.GetPodDataWithNamespace(clientset, namespaceListDropdown.Selected)
 		for _, pod := range podData {
 			if strings.Contains(pod, inputText) {
 				inputTextList = append(inputTextList, pod)
 			}
 		}
 		podData = inputTextList
+		return podData
+	} else {
 		return podData
 	}
 }
@@ -169,12 +173,6 @@ func CreateBaseWidgets() (*widget.Label, *widget.Entry, *widget.Label) {
 	listTitle.TextStyle = fyne.TextStyle{Monospace: true}
 
 	return podStatus, input, listTitle
-}
-func RefreshButton(input *widget.Entry, clientset kubernetes.Clientset) []string {
-	podData := k8s.GetPodData(clientset)
-	input.Text = ""
-	input.Refresh()
-	return podData
 }
 
 func CreateBaseTabs() (*widget.Label, *widget.Label, *container.Scroll, *widget.Label, *widget.Label, *container.Scroll,
