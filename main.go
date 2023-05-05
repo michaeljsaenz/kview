@@ -19,8 +19,8 @@ func main() {
 	// setup k8s clientset
 	clientset := k8s.GetClientSet()
 
-	// load initial pod list data (UI `list`)
-	podData := k8s.GetPodData(*clientset)
+	// retrieve namespaces
+	namespaceList := k8s.GetNamespaces(*clientset)
 
 	// get current cluster context
 	currentContext := k8s.GetCurrentContext()
@@ -35,6 +35,7 @@ func main() {
 	win.CenterOnScreen()
 
 	// list binding, bind pod list (podData) to data
+	var podData []string
 	data, list := ui.GetListData(&podData)
 
 	// intial/base widgets and windows
@@ -48,22 +49,50 @@ func main() {
 	podTabs, podLogTabs := ui.CreateBaseTabContainers(podLabelsLabel, podLabelsScroll, podAnnotationsLabel, podAnnotationsScroll,
 		podEventsLabel, podEventsScroll, podLogsLabel, podLogScroll)
 
+	// create the namespace dropdown list widget
+	namespaceListDropdown := widget.NewSelect(namespaceList, func(selectedNamespace string) {
+		if selectedNamespace != "" {
+			podData = k8s.GetPodDataWithNamespace(*clientset, selectedNamespace)
+		}
+		input.Text = ""
+		input.Refresh()
+		data.Reload()
+		list.UnselectAll()
+
+	})
+
+	namespaceListDropdown.PlaceHolder = "Select namespace..."
+	namespaceListDropdown.FocusGained()
+
 	// update pod list data
 	refresh := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {
-		podData = ui.RefreshButton(input, *clientset)
+		if namespaceListDropdown.Selected == "" {
+			podData = []string{}
+		} else {
+			podData = k8s.GetPodDataWithNamespace(*clientset, namespaceListDropdown.Selected)
+		}
+		input.Text = ""
+		input.Refresh()
 		data.Reload()
 		list.UnselectAll()
 	})
 
 	stringErrorResponse, errorPresent := utils.CheckForError(podData)
+
+	if !errorPresent {
+		stringErrorResponse, errorPresent = utils.CheckForError(namespaceList)
+	}
+
 	if errorPresent {
+		namespaceListDropdown.Disable()
+		input.Disable()
 		rightWindowTitle, list, refresh = ui.SetupErrorUI(stringErrorResponse, list)
 	}
 
 	// search application name (input list field)
 	if !errorPresent {
 		input.OnSubmitted = func(s string) {
-			podData = ui.InputOnSubmitted(input, *clientset)
+			podData = ui.InputOnSubmitted(input, *clientset, namespaceListDropdown)
 			data.Reload()
 			list.UnselectAll()
 		}
@@ -82,7 +111,7 @@ func main() {
 		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs, grid),
 		nil, nil, nil, rightWindow)
 
-	listContainer := container.NewBorder(container.NewVBox(listTitle, input),
+	listContainer := container.NewBorder(container.NewVBox(listTitle, namespaceListDropdown, input),
 		nil, nil, nil, list)
 
 	// podData(list) left side, podData detail right side

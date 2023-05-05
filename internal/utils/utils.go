@@ -17,11 +17,13 @@ func ConvertMapToString(m map[string]string) string {
 
 // check for string(error) in slice
 func CheckForError(slice []string) (string, bool) {
-	checkValue := slice[0]
-	listOfErrors := []string{"i/o timeout", "context deadline exceeded", "connection refused", "Bad Request"}
-	for _, error := range listOfErrors {
-		if strings.Contains(checkValue, error) {
-			return "Error: " + checkValue + " (validate cluster access and restart)", true
+	if slice != nil {
+		checkValue := slice[0]
+		listOfErrors := []string{"i/o timeout", "context deadline exceeded", "connection refused", "Bad Request"}
+		for _, error := range listOfErrors {
+			if strings.Contains(checkValue, error) {
+				return "Error: " + checkValue + " (validate cluster access and restart)", true
+			}
 		}
 	}
 	return "", false
