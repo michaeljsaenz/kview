@@ -98,10 +98,10 @@ func GetNamespaces(c kubernetes.Clientset) (namespaceList []string) {
 
 }
 
-func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace string) (string, string, string, string, string, string, []string) {
+func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace string) (string, string, string, string, []string) {
 	pod, err := c.CoreV1().Pods(podNamespace).Get(context.TODO(), selectedPod, v1.GetOptions{})
 	if err != nil {
-		fmt.Printf("failed to get pod: %v", err)
+		fmt.Printf("failed to get pod detail: %v", err)
 	}
 
 	podCreationTime := pod.GetCreationTimestamp()
@@ -116,14 +116,31 @@ func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace strin
 	for _, container := range pod.Spec.Containers {
 		containers = append(containers, container.Name)
 	}
-	return string(pod.Status.Phase), podAge, string(pod.Namespace), utils.ConvertMapToString(pod.Labels),
-		utils.ConvertMapToString(pod.Annotations), pod.Spec.NodeName, containers
+	return string(pod.Status.Phase), podAge, string(pod.Namespace), pod.Spec.NodeName, containers
+}
+
+func GetPodLabels(c kubernetes.Clientset, selectedPod string, podNamespace string) string {
+	pod, err := c.CoreV1().Pods(podNamespace).Get(context.TODO(), selectedPod, v1.GetOptions{})
+	if err != nil {
+		fmt.Printf("failed to get pod labels: %v", err)
+	}
+
+	return utils.ConvertMapToString(pod.Labels)
+}
+
+func GetPodAnnotations(c kubernetes.Clientset, selectedPod string, podNamespace string) string {
+	pod, err := c.CoreV1().Pods(podNamespace).Get(context.TODO(), selectedPod, v1.GetOptions{})
+	if err != nil {
+		fmt.Printf("failed to get pod annotations: %v", err)
+	}
+
+	return utils.ConvertMapToString(pod.Annotations)
 }
 
 func GetPodEvents(c kubernetes.Clientset, selectedPod string, podNamespace string) (podEvents []string) {
 	events, _ := c.CoreV1().Events(podNamespace).List(context.TODO(), v1.ListOptions{FieldSelector: fmt.Sprintf("involvedObject.name=%s", selectedPod), TypeMeta: v1.TypeMeta{Kind: "Pod"}})
 	for _, item := range events.Items {
-		podEvents = append(podEvents, "~> "+item.FirstTimestamp.String()+" "+item.Message)
+		podEvents = append(podEvents, item.FirstTimestamp.String()+" "+item.Message)
 	}
 	return podEvents
 }
