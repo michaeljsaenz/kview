@@ -28,8 +28,6 @@ func main() {
 	// create a new app, window title and size
 	app := app.New()
 	win := app.NewWindow("KView")
-	// icon, _ := fyne.LoadResourceFromPath("internal/assets/icon/icon.png")
-	// win.SetIcon(icon)
 	win.SetMaster()
 	win.Resize(fyne.NewSize(1200, 700))
 	win.CenterOnScreen()
@@ -44,10 +42,10 @@ func main() {
 	podStatus, input, listTitle := ui.CreateBaseWidgets()
 
 	podLabelsLabel, podLabels, podLabelsScroll, podAnnotationsLabel, podAnnotations, podAnnotationsScroll,
-		podEventsLabel, podEvents, podEventsScroll, podLogsLabel, podLog, podLogScroll := ui.CreateBaseTabs()
+		podEventsLabel, podEvents, podEventsScroll, podLogsLabel, podLog, podLogScroll, podDetailLabel, podDetailLog, podDetailScroll := ui.CreateBaseTabs()
 
 	podTabs, podLogTabs := ui.CreateBaseTabContainers(podLabelsLabel, podLabelsScroll, podAnnotationsLabel, podAnnotationsScroll,
-		podEventsLabel, podEventsScroll, podLogsLabel, podLogScroll)
+		podEventsLabel, podEventsScroll, podLogsLabel, podLogScroll, podDetailLabel, podDetailScroll)
 
 	// create the namespace dropdown list widget
 	namespaceListDropdown := widget.NewSelect(namespaceList, func(selectedNamespace string) {
@@ -75,6 +73,8 @@ func main() {
 		input.Refresh()
 		data.Reload()
 		list.UnselectAll()
+		podTabs.SelectIndex(0)
+		podLogTabs.SelectIndex(0)
 	})
 
 	stringErrorResponse, errorPresent := utils.CheckForError(podData)
@@ -102,10 +102,21 @@ func main() {
 	})
 	yamlButton.Hide()
 
-	grid := container.New(layout.NewGridLayout(1), yamlButton)
+	logButton := widget.NewButtonWithIcon("Port Forward to Container", theme.DocumentIcon(), func() {
+	})
+	logButton.Hide()
+
+	grid := container.New(layout.NewGridLayout(2), logButton, yamlButton)
 
 	ui.ListOnSelected(list, data, *clientset, rightWindowTitle, podStatus, podLabels,
-		podAnnotations, podEvents, podLog, podLogTabs, podLogScroll, app, yamlButton)
+		podAnnotations, podEvents, podLog, podDetailLog, podTabs, podLogTabs, podLogScroll,
+		podLogsLabel, app, yamlButton, logButton, namespaceListDropdown)
+
+	//return tabs to initial tab (index 0)
+	list.OnUnselected = func(id widget.ListItemID) {
+		podTabs.SelectIndex(0)
+		podLogTabs.SelectIndex(0)
+	}
 
 	rightContainer := container.NewBorder(
 		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs, grid),
