@@ -58,8 +58,9 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 		title.Text = "Application (Pod): " + selectedPod
 		title.Refresh()
 
-		newPodStatus, newPodAge, newPodNamespace, newNodeName, newContainers := k8s.GetPodDetail(clientset, selectedPod, namespaceListDropdown.Selected)
+		newPodStatus, newPodAge, newNodeName, newContainers := k8s.GetPodDetail(clientset, selectedPod, namespaceListDropdown.Selected)
 
+		newPodNamespace := namespaceListDropdown.Selected
 		podStatus.Text = "Status: " + newPodStatus + "\n" +
 			"Age: " + newPodAge + "\n" +
 			"Namespace: " + newPodNamespace + "\n" +
@@ -146,7 +147,7 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			win := app.NewWindow("Application (Pod): " + selectedPod)
 			podYaml, err := k8s.GetPodYaml(clientset, newPodNamespace, selectedPod)
 			if err != nil {
-				fmt.Printf("error with pod yaml: %v", err)
+				fmt.Printf("error with GetPodYaml: %v\n", err)
 			}
 			podYamlScroll := container.NewScroll(widget.NewLabel(podYaml))
 

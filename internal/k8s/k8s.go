@@ -98,7 +98,7 @@ func GetNamespaces(c kubernetes.Clientset) (namespaceList []string) {
 
 }
 
-func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace string) (string, string, string, string, []string) {
+func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace string) (string, string, string, []string) {
 	pod, err := c.CoreV1().Pods(podNamespace).Get(context.TODO(), selectedPod, v1.GetOptions{})
 	if err != nil {
 		fmt.Printf("failed to get pod detail: %v", err)
@@ -116,7 +116,7 @@ func GetPodDetail(c kubernetes.Clientset, selectedPod string, podNamespace strin
 	for _, container := range pod.Spec.Containers {
 		containers = append(containers, container.Name)
 	}
-	return string(pod.Status.Phase), podAge, string(pod.Namespace), pod.Spec.NodeName, containers
+	return string(pod.Status.Phase), podAge, pod.Spec.NodeName, containers
 }
 
 func GetPodLabels(c kubernetes.Clientset, selectedPod string, podNamespace string) string {
@@ -195,26 +195,25 @@ func GetPodNamespace(c kubernetes.Clientset, podName string) (podNamespace strin
 func GetPodYaml(c kubernetes.Clientset, podNamespace string, podName string) (string, error) {
 	pod, err := c.CoreV1().Pods(podNamespace).Get(context.TODO(), podName, v1.GetOptions{})
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error getting pod: %v", err)
 	}
 
-	// delete sections from yaml output
-	pod.ObjectMeta.ManagedFields = []v1.ManagedFieldsEntry{}
+	// clear unnecessary fields
+	pod.ObjectMeta.ManagedFields = nil
 	pod.ObjectMeta.GenerateName = ""
 	pod.Status = corev1.PodStatus{}
 
-	// serialize the Pod to JSON YAML format
-	codecs := serializer.NewCodecFactory(scheme.Scheme)
-	obj := runtime.Object(pod)
-	marshaledYaml, err := runtime.Encode(codecs.LegacyCodec(corev1.SchemeGroupVersion), obj)
+	// serialize the Pod to YAML format
+	codec := serializer.NewCodecFactory(scheme.Scheme).LegacyCodec(corev1.SchemeGroupVersion)
+	marshaledYaml, err := runtime.Encode(codec, pod)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error encoding YAML: %v", err)
 	}
 
 	// convert the marshaled YAML to a string
 	yamlString, err := yaml.JSONToYAML(marshaledYaml)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("error converting YAML to string: %v", err)
 	}
 
 	return string(yamlString), nil
