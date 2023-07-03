@@ -13,7 +13,9 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	"github.com/michaeljsaenz/kview/internal/k8s"
+	"github.com/michaeljsaenz/kview/internal/utils"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 func GetListData(podData *[]string) (binding.ExternalStringList, *widget.List) {
@@ -46,9 +48,9 @@ func SetupErrorUI(stringErrorResponse string, list *widget.List) (*widget.Label,
 	return title, list, refresh
 }
 
-func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientset kubernetes.Clientset, title, podStatus,
-	podLabels, podAnnotations, podEvents, podLog *widget.Label, podDetailLog *widget.Label, podTabs *container.AppTabs, podLogTabs *container.AppTabs,
-	podLogScroll *container.Scroll, podLogsLabel *widget.Label, app fyne.App, yb *widget.Button, lb *widget.Button, namespaceListDropdown *widget.Select) {
+func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientset kubernetes.Clientset, config rest.Config, title, podStatus,
+	podLabels, podAnnotations, podEvents, podVolumes, podLog *widget.Label, podDetailLog *widget.Label, podTabs *container.AppTabs, podLogTabs *container.AppTabs,
+	podLogScroll *container.Scroll, podLogsLabel *widget.Label, app fyne.App, yb *widget.Button, execButtons []*widget.Button, namespaceListDropdown *widget.Select) {
 	list.OnSelected = func(id widget.ListItemID) {
 
 		selectedPod, err := data.GetValue(id)
@@ -77,7 +79,7 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 				podLabels.Refresh()
 			case "Annotations":
 				// get pod annotations
-				newPodAnnotations := k8s.GetPodLabels(clientset, selectedPod, namespaceListDropdown.Selected)
+				newPodAnnotations := k8s.GetPodAnnotations(clientset, selectedPod, namespaceListDropdown.Selected)
 				podAnnotations.Text = newPodAnnotations
 				podAnnotations.Refresh()
 			case "Events":
@@ -86,7 +88,16 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 				strNewPodEvents := strings.Join(newPodEvents, "\n")
 				podEvents.Text = strNewPodEvents
 				podEvents.Refresh()
+			case "Volumes":
+				// get pod volumes
+				newVolumes, err := k8s.GetPodVolumes(clientset, selectedPod, namespaceListDropdown.Selected)
+				if err != nil {
+					fmt.Printf("error with GetPodVolumes: %v\n", err)
+				}
+				podVolumes.Text = newVolumes
+				podVolumes.Refresh()
 			}
+
 		}
 
 		currentSelectedTabItemName := podTabs.Selected()
@@ -98,7 +109,7 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			podLabels.Refresh()
 		case "Annotations":
 			// get pod annotations
-			newPodAnnotations := k8s.GetPodLabels(clientset, selectedPod, namespaceListDropdown.Selected)
+			newPodAnnotations := k8s.GetPodAnnotations(clientset, selectedPod, namespaceListDropdown.Selected)
 			podAnnotations.Text = newPodAnnotations
 			podAnnotations.Refresh()
 		case "Events":
@@ -107,26 +118,88 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			strNewPodEvents := strings.Join(newPodEvents, "\n")
 			podEvents.Text = strNewPodEvents
 			podEvents.Refresh()
+		case "Volumes":
+			// get pod annotations
+			newVolumes, err := k8s.GetPodVolumes(clientset, selectedPod, namespaceListDropdown.Selected)
+			if err != nil {
+				fmt.Printf("error with GetPodVolumes: %v\n", err)
+			}
+			podVolumes.Text = newVolumes
+			podVolumes.Refresh()
 		}
 
 		yb.Show()
-		lb.Show()
 
 		// remove container log tabs before loading current selection
-		podTabItems := len(podLogTabs.Items)
-		for podTabItems > 1 {
+		podLogTabItems := len(podLogTabs.Items)
+		for podLogTabItems > 1 {
 			for _, item := range podLogTabs.Items {
 				if item.Text != podLogsLabel.Text {
 					podLogTabs.Remove(item)
 				}
 			}
-			podTabItems = len(podLogTabs.Items)
+			podLogTabItems = len(podLogTabs.Items)
 		}
 
 		for _, tabContainerName := range newContainers {
 			podLogScroll.SetMinSize(fyne.Size{Height: 200})
 			podLogTabs.Append(container.NewTabItemWithIcon(tabContainerName, theme.DocumentIcon(), podLogScroll))
 			podLogTabs.Refresh()
+		}
+
+		for i, buttonContainerName := range newContainers {
+			execButtons[i].SetText(buttonContainerName)
+			execButtons[i].Show()
+			if i == 9 {
+				break
+			}
+		}
+
+		// assign the OnTapped function to each button
+		for _, button := range execButtons {
+			button := button
+			button.OnTapped = func() {
+
+				win := app.NewWindow("Container Name: " + button.Text)
+
+				// Create an entry field for user input
+				entry := widget.NewEntry()
+				entry.SetPlaceHolder("Enter a command")
+
+				// Create a label for displaying the prompt and command output
+				outputLabel := widget.NewLabel("")
+				podOutputScroll := container.NewScroll(outputLabel)
+
+				// OnSubmitted event handler to execute the command
+				entry.OnSubmitted = func(command string) {
+					client := k8s.GetClientInterface(clientset)
+					// execute the command and return string output
+					commandOutput, err := k8s.ExecCmd(client, config, selectedPod, button.Text, namespaceListDropdown.Selected, command, nil)
+					if err != nil {
+						fmt.Println(err)
+					}
+
+					// update the output label
+					commandOutput = utils.RemoveANSIEscapeCodes(commandOutput)
+					outputLabel.SetText(commandOutput)
+
+					// Use the captured stdout content as needed
+					podOutputScroll = container.NewScroll(outputLabel)
+					entry.SetText("") // clear the input field
+				}
+
+				bottomBox := container.NewVBox(
+					widget.NewButtonWithIcon("Copy Output", theme.ContentCopyIcon(), func() {
+						win.Clipboard().SetContent(outputLabel.Text)
+					}),
+				)
+
+				content := container.NewBorder(entry, bottomBox, nil, nil, podOutputScroll)
+
+				win.SetContent(content)
+				win.Resize(fyne.NewSize(1200, 700))
+				win.Show()
+			}
 		}
 
 		podLogTabs.OnSelected = func(containerTabItemName *container.TabItem) {
@@ -204,7 +277,7 @@ func CreateWindows(currentContext string) (*canvas.Text, *fyne.Container, *fyne.
 
 func CreateBaseWidgets() (*widget.Label, *widget.Entry, *widget.Label) {
 	// setup pod status
-	podStatus := widget.NewLabel("")
+	podStatus := widget.NewLabel("Status: \n" + "Age: \n" + "Namespace: \n" + "Node: ")
 	podStatus.TextStyle = fyne.TextStyle{Monospace: true}
 
 	// setup input widget
@@ -219,17 +292,20 @@ func CreateBaseWidgets() (*widget.Label, *widget.Entry, *widget.Label) {
 }
 
 func CreateBaseTabs() (*widget.Label, *widget.Label, *container.Scroll, *widget.Label, *widget.Label, *container.Scroll,
-	*widget.Label, *widget.Label, *container.Scroll, *widget.Label, *widget.Label, *container.Scroll, *widget.Label, *widget.Label, *container.Scroll) {
+	*widget.Label, *widget.Label, *container.Scroll, *widget.Label, *widget.Label, *container.Scroll, *widget.Label, *widget.Label,
+	*container.Scroll, *widget.Label, *widget.Label, *container.Scroll) {
 
-	//get pod labels, annotations, events for tabs
+	//get pod labels, annotations, events, volumes for tabs
 	podDetailLabel, podDetailLog, podDetailScroll := GetPodTabData("")
 	podLabelsLabel, podLabels, podLabelsScroll := GetPodTabData("Labels")
 	podAnnotationsLabel, podAnnotations, podAnnotationsScroll := GetPodTabData("Annotations")
 	podEventsLabel, podEvents, podEventsScroll := GetPodTabData("Events")
+	podVolumesLabel, podVolumes, podVolumesScroll := GetPodTabData("Volumes")
 	podLogsLabel, podLog, podLogScroll := GetPodTabData("")
 
 	return podLabelsLabel, podLabels, podLabelsScroll, podAnnotationsLabel, podAnnotations, podAnnotationsScroll,
-		podEventsLabel, podEvents, podEventsScroll, podLogsLabel, podLog, podLogScroll, podDetailLabel, podDetailLog, podDetailScroll
+		podEventsLabel, podEvents, podEventsScroll, podLogsLabel, podLog, podLogScroll, podDetailLabel, podDetailLog, podDetailScroll,
+		podVolumesLabel, podVolumes, podVolumesScroll
 
 }
 
@@ -244,16 +320,34 @@ func GetPodTabData(widgetLabelName string) (widgetNameLabel *widget.Label, widge
 }
 
 func CreateBaseTabContainers(podLabelsLabel *widget.Label, podLabelsScroll *container.Scroll, podAnnotationsLabel *widget.Label, podAnnotationsScroll *container.Scroll,
-	podEventsLabel *widget.Label, podEventsScroll *container.Scroll, podLogsLabel *widget.Label, podLogScroll *container.Scroll, podDetailLabel *widget.Label, podDetailScroll *container.Scroll) (*container.AppTabs, *container.AppTabs) {
+	podEventsLabel *widget.Label, podEventsScroll *container.Scroll, podLogsLabel *widget.Label, podLogScroll *container.Scroll, podDetailLabel *widget.Label, podDetailScroll *container.Scroll,
+	podVolumesLabel *widget.Label, podVolumesScroll *container.Scroll) (*container.AppTabs, *container.AppTabs) {
 	podTabs := container.NewAppTabs(
 		container.NewTabItemWithIcon(podDetailLabel.Text, theme.MailForwardIcon(), podDetailScroll),
 		container.NewTabItem(podLabelsLabel.Text, podLabelsScroll),
 		container.NewTabItem(podAnnotationsLabel.Text, podAnnotationsScroll),
 		container.NewTabItem(podEventsLabel.Text, podEventsScroll),
+		container.NewTabItem(podVolumesLabel.Text, podVolumesScroll),
 	)
 	podLogTabs := container.NewAppTabs(
 		container.NewTabItemWithIcon(podLogsLabel.Text, theme.MailForwardIcon(), podLogScroll),
 	)
 
 	return podTabs, podLogTabs
+}
+
+func CreateIconButton(buttonName string, iconTheme fyne.Resource) *widget.Button {
+	button := widget.NewButtonWithIcon(buttonName, iconTheme, func() {})
+	return button
+}
+
+func CreateBaseExecIconButton(buttonName string, iconTheme fyne.Resource) []*widget.Button {
+	buttons := make([]*widget.Button, 10)
+
+	for i := 0; i < 10; i++ {
+		button := widget.NewButtonWithIcon(buttonName, iconTheme, func() {})
+		buttons[i] = button
+	}
+
+	return buttons
 }
