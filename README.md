@@ -12,11 +12,12 @@
 - Contributions welcome:exclamation:
 
 ## Features
-- **Filter and Search:**  Filter by application(pod)
-- **On-demand Refresh:** Refresh application(pod) list on-demand
-- **Status Information:** View application(pod) status, annotations, labels, including events and current cluster-context
-- **Export YAML:**  View/Copy application(pod) YAML and/or container details
+- **Filter and Search:**  Filter by namespace and application (pod)
+- **On Demand Refresh:** Refresh list of applications (pods)
+- **Status Information:** View application (pod) status, annotations, labels, events, cluster-context
+- **Export YAML:**  View/Copy application (pod) YAML
 - **Logs:** View container logs
+- **Pod Exec:** Execute commands on containers
 
 ## Screenshots
 ![Screenshot](screenshot.png)
