@@ -119,7 +119,7 @@ func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientse
 			podEvents.Text = strNewPodEvents
 			podEvents.Refresh()
 		case "Volumes":
-			// get pod annotations
+			// get pod volumes
 			newVolumes, err := k8s.GetPodVolumes(clientset, selectedPod, namespaceListDropdown.Selected)
 			if err != nil {
 				fmt.Printf("error with GetPodVolumes: %v\n", err)
