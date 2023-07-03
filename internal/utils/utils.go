@@ -3,10 +3,10 @@ package utils
 import (
 	"bytes"
 	"fmt"
+	"regexp"
 	"strings"
 )
 
-// used by labels, annotations, ...
 func ConvertMapToString(m map[string]string) string {
 	b := new(bytes.Buffer)
 	for key, value := range m {
@@ -32,4 +32,10 @@ func CheckForError(slice []string) (string, bool) {
 // return pointer to int64
 func CreateInt64(num int64) *int64 {
 	return &num
+}
+
+func RemoveANSIEscapeCodes(input string) string {
+	regex := regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+	clean := regex.ReplaceAllString(input, "")
+	return clean
 }

@@ -17,7 +17,7 @@ import (
 
 func main() {
 	// setup k8s clientset
-	clientset := k8s.GetClientSet()
+	clientset, config := k8s.GetClientSet()
 
 	// retrieve namespaces
 	namespaceList := k8s.GetNamespaces(*clientset)
@@ -42,10 +42,11 @@ func main() {
 	podStatus, input, listTitle := ui.CreateBaseWidgets()
 
 	podLabelsLabel, podLabels, podLabelsScroll, podAnnotationsLabel, podAnnotations, podAnnotationsScroll,
-		podEventsLabel, podEvents, podEventsScroll, podLogsLabel, podLog, podLogScroll, podDetailLabel, podDetailLog, podDetailScroll := ui.CreateBaseTabs()
+		podEventsLabel, podEvents, podEventsScroll, podLogsLabel, podLog, podLogScroll, podDetailLabel, podDetailLog, podDetailScroll,
+		podVolumesLabel, podVolumes, podVolumesScroll := ui.CreateBaseTabs()
 
 	podTabs, podLogTabs := ui.CreateBaseTabContainers(podLabelsLabel, podLabelsScroll, podAnnotationsLabel, podAnnotationsScroll,
-		podEventsLabel, podEventsScroll, podLogsLabel, podLogScroll, podDetailLabel, podDetailScroll)
+		podEventsLabel, podEventsScroll, podLogsLabel, podLogScroll, podDetailLabel, podDetailScroll, podVolumesLabel, podVolumesScroll)
 
 	// create the namespace dropdown list widget
 	namespaceListDropdown := widget.NewSelect(namespaceList, func(selectedNamespace string) {
@@ -62,7 +63,7 @@ func main() {
 	namespaceListDropdown.PlaceHolder = "Select namespace..."
 	namespaceListDropdown.FocusGained()
 
-	// update pod list data
+	// refresh and clear pod list data
 	refresh := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {
 		if namespaceListDropdown.Selected == "" {
 			podData = []string{}
@@ -75,6 +76,20 @@ func main() {
 		list.UnselectAll()
 		podTabs.SelectIndex(0)
 		podLogTabs.SelectIndex(0)
+		// remove container log tabs before loading current selection
+		podLogTabItems := len(podLogTabs.Items)
+		for podLogTabItems > 1 {
+			for _, item := range podLogTabs.Items {
+				if item.Text != podLogsLabel.Text {
+					podLogTabs.Remove(item)
+				}
+			}
+			podLogTabItems = len(podLogTabs.Items)
+		}
+		podStatus.Text = "Status: \n" + "Age: \n" + "Namespace: \n" + "Node: "
+		podStatus.Refresh()
+		rightWindowTitle.Text = "Select application (pod)..."
+		rightWindowTitle.Refresh()
 	})
 
 	stringErrorResponse, errorPresent := utils.CheckForError(podData)
@@ -98,28 +113,33 @@ func main() {
 		}
 	}
 
-	yamlButton := widget.NewButtonWithIcon("Application (Pod) YAML", theme.ZoomInIcon(), func() {
-	})
+	yamlButton := ui.CreateIconButton("Application (Pod) YAML", theme.ZoomInIcon())
 	yamlButton.Hide()
 
-	logButton := widget.NewButtonWithIcon("Port Forward to Container", theme.DocumentIcon(), func() {
-	})
-	logButton.Hide()
+	execButtons := ui.CreateBaseExecIconButton("", theme.LoginIcon())
+	for _, execButton := range execButtons {
+		execButton.Hide()
+	}
 
-	grid := container.New(layout.NewGridLayout(2), logButton, yamlButton)
+	gridOne := container.New(layout.NewGridLayout(1), yamlButton)
+	gridTwo := container.New(layout.NewGridLayoutWithColumns(2), execButtons[0], execButtons[1], execButtons[2], execButtons[3], execButtons[4],
+		execButtons[5], execButtons[6], execButtons[7], execButtons[8], execButtons[9])
 
-	ui.ListOnSelected(list, data, *clientset, rightWindowTitle, podStatus, podLabels,
-		podAnnotations, podEvents, podLog, podDetailLog, podTabs, podLogTabs, podLogScroll,
-		podLogsLabel, app, yamlButton, logButton, namespaceListDropdown)
+	ui.ListOnSelected(list, data, *clientset, *config, rightWindowTitle, podStatus, podLabels,
+		podAnnotations, podEvents, podVolumes, podLog, podDetailLog, podTabs, podLogTabs, podLogScroll,
+		podLogsLabel, app, yamlButton, execButtons, namespaceListDropdown)
 
 	//return tabs to initial tab (index 0)
 	list.OnUnselected = func(id widget.ListItemID) {
 		podTabs.SelectIndex(0)
 		podLogTabs.SelectIndex(0)
+		for _, execButton := range execButtons {
+			execButton.Hide()
+		}
 	}
 
 	rightContainer := container.NewBorder(
-		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs, grid),
+		container.NewVBox(rightWindowTitle, podStatus, podTabs, podLogTabs, gridOne, gridTwo),
 		nil, nil, nil, rightWindow)
 
 	listContainer := container.NewBorder(container.NewVBox(listTitle, namespaceListDropdown, input),

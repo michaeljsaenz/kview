@@ -22,3 +22,4 @@ coverage.txt
 .DS_Store
 *.drawio
 KView.app/*
+testfile.txt
