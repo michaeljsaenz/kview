@@ -99,9 +99,7 @@ func main() {
 	}
 
 	if errorPresent {
-		namespaceListDropdown.Disable()
-		input.Disable()
-		rightWindowTitle, list, refresh = ui.SetupErrorUI(stringErrorResponse, list)
+		ui.SetupErrorUI(stringErrorResponse, namespaceListDropdown, input, app)
 	}
 
 	// search application name (input list field)

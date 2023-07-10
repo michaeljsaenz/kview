@@ -22,7 +22,7 @@ func CheckForError(slice []string) (string, bool) {
 		listOfErrors := []string{"i/o timeout", "context deadline exceeded", "connection refused", "Bad Request"}
 		for _, error := range listOfErrors {
 			if strings.Contains(checkValue, error) {
-				return "Error: " + checkValue + " (validate cluster access and restart)", true
+				return "Error: " + checkValue, true
 			}
 		}
 	}

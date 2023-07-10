@@ -35,17 +35,36 @@ func GetListData(podData *[]string) (binding.ExternalStringList, *widget.List) {
 	return data, list
 }
 
-func SetupErrorUI(stringErrorResponse string, list *widget.List) (*widget.Label, *widget.List, *widget.Button) {
-	title := widget.NewLabel("")
-	title.TextStyle = fyne.TextStyle{Monospace: true}
-	title.Text = stringErrorResponse
-	title.Wrapping = fyne.TextWrapBreak
-	title.TextStyle = fyne.TextStyle{Italic: true, Bold: true}
-	title.Refresh()
-	list.Hide()
-	refresh := widget.NewButtonWithIcon("Refresh", theme.ViewRefreshIcon(), func() {})
-	refresh.Refresh()
-	return title, list, refresh
+func SetupErrorUI(stringErrorResponse string, namespaceListDropdown *widget.Select,
+	input *widget.Entry, app fyne.App) {
+
+	// disable main window content
+	namespaceListDropdown.Disable()
+	input.Disable()
+
+	// error window
+	errorLabel := widget.NewLabel("")
+	errorLabel.TextStyle = fyne.TextStyle{Monospace: true}
+	errorLabel.Text = stringErrorResponse
+	errorLabel.Wrapping = fyne.TextWrapBreak
+	errorLabel.TextStyle = fyne.TextStyle{Italic: true, Bold: true}
+
+	// display error message
+	errorContainer := container.NewHScroll(errorLabel)
+	errorWin := app.NewWindow("Error")
+	bottomBox := container.NewVBox(
+		widget.NewButtonWithIcon("Close", theme.ErrorIcon(), func() {
+			errorWin.Close()
+		}),
+	)
+
+	content := container.NewBorder(nil, bottomBox, nil, nil, errorContainer)
+	errorWin.Resize(fyne.NewSize(500, 100))
+	errorWin.SetContent(content)
+	errorWin.CenterOnScreen()
+	errorWin.SetMaster()
+	errorWin.RequestFocus()
+	errorWin.Show()
 }
 
 func ListOnSelected(list *widget.List, data binding.ExternalStringList, clientset kubernetes.Clientset, config rest.Config, title, podStatus,
