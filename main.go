@@ -53,13 +53,8 @@ func main() {
 		if selectedNamespace != "" {
 			podData = k8s.GetPodDataWithNamespace(*clientset, selectedNamespace)
 		}
-		input.Text = ""
-		input.Refresh()
-		data.Reload()
-		list.UnselectAll()
-
+		ui.UpdateInput(input, data, list)
 	})
-
 	namespaceListDropdown.PlaceHolder = "Select namespace..."
 	namespaceListDropdown.FocusGained()
 
@@ -70,26 +65,9 @@ func main() {
 		} else {
 			podData = k8s.GetPodDataWithNamespace(*clientset, namespaceListDropdown.Selected)
 		}
-		input.Text = ""
-		input.Refresh()
-		data.Reload()
-		list.UnselectAll()
-		podTabs.SelectIndex(0)
-		podLogTabs.SelectIndex(0)
-		// remove container log tabs before loading current selection
-		podLogTabItems := len(podLogTabs.Items)
-		for podLogTabItems > 1 {
-			for _, item := range podLogTabs.Items {
-				if item.Text != podLogsLabel.Text {
-					podLogTabs.Remove(item)
-				}
-			}
-			podLogTabItems = len(podLogTabs.Items)
-		}
-		podStatus.Text = "Status: \n" + "Age: \n" + "Namespace: \n" + "Node: "
-		podStatus.Refresh()
-		rightWindowTitle.Text = "Select application (pod)..."
-		rightWindowTitle.Refresh()
+
+		ui.RefreshData(input, data, list, podTabs, podLogTabs, podLogsLabel, podStatus, rightWindowTitle)
+
 	})
 
 	stringErrorResponse, errorPresent := utils.CheckForError(podData)
@@ -120,8 +98,8 @@ func main() {
 	}
 
 	gridOne := container.New(layout.NewGridLayout(1), yamlButton)
-	gridTwo := container.New(layout.NewGridLayoutWithColumns(2), execButtons[0], execButtons[1], execButtons[2], execButtons[3], execButtons[4],
-		execButtons[5], execButtons[6], execButtons[7], execButtons[8], execButtons[9])
+	gridTwo := container.New(layout.NewGridLayoutWithColumns(2), execButtons[0], execButtons[1], execButtons[2],
+		execButtons[3], execButtons[4], execButtons[5], execButtons[6], execButtons[7], execButtons[8], execButtons[9])
 
 	ui.ListOnSelected(list, data, *clientset, *config, rightWindowTitle, podStatus, podLabels,
 		podAnnotations, podEvents, podVolumes, podLog, podDetailLog, podTabs, podLogTabs, podLogScroll,

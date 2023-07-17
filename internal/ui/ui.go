@@ -370,3 +370,35 @@ func CreateBaseExecIconButton(buttonName string, iconTheme fyne.Resource) []*wid
 
 	return buttons
 }
+
+func RefreshData(input *widget.Entry, data binding.ExternalStringList, list *widget.List, podTabs *container.AppTabs,
+	podLogTabs *container.AppTabs, podLogsLabel *widget.Label, podStatus *widget.Label, rightWindowTitle *widget.Label) {
+	input.Text = ""
+	input.Refresh()
+	data.Reload()
+	list.UnselectAll()
+	podTabs.SelectIndex(0)
+	podLogTabs.SelectIndex(0)
+	// remove container log tabs before loading current selection
+	podLogTabItems := len(podLogTabs.Items)
+	for podLogTabItems > 1 {
+		for _, item := range podLogTabs.Items {
+			if item.Text != podLogsLabel.Text {
+				podLogTabs.Remove(item)
+			}
+		}
+		podLogTabItems = len(podLogTabs.Items)
+	}
+	podStatus.Text = "Status: \n" + "Age: \n" + "Namespace: \n" + "Node: "
+	podStatus.Refresh()
+	rightWindowTitle.Text = "Select application (pod)..."
+	rightWindowTitle.Refresh()
+
+}
+
+func UpdateInput(input *widget.Entry, data binding.ExternalStringList, list *widget.List) {
+	input.Text = ""
+	input.Refresh()
+	data.Reload()
+	list.UnselectAll()
+}
