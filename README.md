@@ -20,7 +20,7 @@
 - **Pod Exec:** Execute commands on containers
 
 ## Screenshots
-![Screenshot](kview-screenshot.png)
+![Screenshot](screenshot.png)
 
 ## Backlog
 See [Issues](https://github.com/michaeljsaenz/kview/issues)
