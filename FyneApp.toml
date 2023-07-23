@@ -4,5 +4,5 @@ Website = "https://kview.app"
   Icon = "internal/assets/icon/icon.png"
   Name = "KView"
   ID = "app.kview"
-  Version = "0.0.3"
-  Build = 9
+  Version = "0.0.5"
+  Build = 10
