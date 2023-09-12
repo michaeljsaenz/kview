@@ -5,7 +5,7 @@
 </p>
 
 # KView
-[KView](https://kview.app) is a standalone desktop application to interact with your Kubernetes cluster.  Get started by downloading it from [KView website](https://kview.app).
+KView is a standalone desktop application to interact with your Kubernetes cluster.
 - Utilizes the [Fyne toolkit](https://fyne.io/)
 - Written :100: percent in [Go](https://go.dev/)
 - Built for macOS:apple:
